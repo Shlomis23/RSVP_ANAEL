@@ -1,0 +1,1039 @@
+@import "tailwindcss";
+
+:root {
+  --cream: #faf6f0;
+  --paper: #fffdfa;
+  --rose: #935a68;
+  --rose-light: #f3e6e6;
+  --gold: #89622d;
+  --ink: #493b35;
+  --muted: #776d66;
+  --line: #e8ded3;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--cream);
+  font-family: Arial, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+input,
+select {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  width: 100%;
+}
+input::placeholder {
+  color: var(--muted);
+}
+input:focus,
+select:focus {
+  border-color: var(--rose);
+}
+fieldset {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+.button {
+  min-height: 46px;
+  padding: 10px 19px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.button-primary {
+  background: var(--rose);
+  color: white;
+  box-shadow: 0 5px 13px #935a6818;
+}
+.button-primary:hover:not(:disabled) {
+  background: #7e4957;
+}
+.button-outline {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.button-outline:hover:not(:disabled) {
+  background: #f8eee8;
+}
+.button-ghost {
+  background: transparent;
+  color: var(--rose);
+}
+.button-ghost:hover:not(:disabled) {
+  background: var(--rose-light);
+}
+.skip-link {
+  position: fixed;
+  top: -100px;
+  right: 20px;
+  z-index: 100;
+  padding: 14px;
+  background: var(--paper);
+}
+.skip-link:focus {
+  top: 10px;
+}
+.site-header,
+.admin-header {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.brand-monogram {
+  background: var(--rose-light);
+  color: var(--rose);
+  border: 1px solid #dfc3c7;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  font-family: "Times New Roman", serif;
+}
+.blessing {
+  font-size: 13px;
+  color: var(--gold);
+}
+.guest-page {
+  background:
+    radial-gradient(ellipse at 15% 20%, #f0e4de 0, transparent 45%),
+    var(--cream);
+  min-height: 100vh;
+}
+.guest-main {
+  max-width: 1120px;
+  margin: 18px auto 40px;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 72px;
+  align-items: start;
+}
+.invitation-panel {
+  padding-top: 14px;
+}
+.invitation-image-button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  border-radius: 180px 180px 28px 28px;
+  box-shadow: 0 22px 65px #79514320;
+  overflow: hidden;
+}
+.invitation-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.image-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gold);
+  padding-top: 7px;
+}
+.invitation-copy {
+  text-align: center;
+  padding: 4px 5px 22px;
+}
+.eyebrow {
+  display: block;
+  color: var(--gold);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+.invitation-copy .eyebrow {
+  direction: ltr;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  letter-spacing: 3px;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+.invitation-copy h1 {
+  font-size: 29px;
+  font-weight: 400;
+  margin: 10px 0;
+  line-height: 1.35;
+}
+.invitation-copy h1 span {
+  display: block;
+  color: var(--rose);
+  font-size: 70px;
+  font-weight: 500;
+  letter-spacing: -3px;
+  margin: 0 0 10px;
+}
+.invitation-copy > p {
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 370px;
+  margin: auto;
+  color: var(--muted);
+}
+.invitation-copy .hosts {
+  color: var(--gold);
+  font-size: 13px;
+  margin-top: 12px;
+}
+.event-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 17px 0;
+  margin-bottom: 24px;
+}
+.event-details > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+.event-details > div + div {
+  border-right: 1px solid var(--line);
+}
+.event-details svg {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.event-details strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.event-details small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.rsvp-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 27px;
+  box-shadow: 0 12px 40px #73543c08;
+}
+.card-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 25px;
+}
+.section-marker {
+  display: inline-grid;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--rose-light);
+  color: var(--rose);
+}
+.card-heading h2 {
+  font-size: 19px;
+  font-weight: 500;
+}
+.card-heading p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 23px;
+}
+.field > label,
+.attendance-field legend {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 9px;
+  font-weight: 500;
+}
+.field > label span,
+.attendance-field legend span {
+  color: var(--rose);
+}
+.attendance-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.attendance-option {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 16px 5px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  cursor: pointer;
+  position: relative;
+  color: var(--muted);
+  font-size: 12px;
+  min-height: 85px;
+}
+.attendance-option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  min-height: 0;
+}
+.attendance-option:has(input:focus-visible) {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.attendance-option.selected {
+  border-color: var(--rose);
+  color: var(--rose);
+  background: #fcf4f4;
+}
+.attendance-option:has(input:disabled) {
+  cursor: default;
+}
+.stepper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: fit-content;
+}
+.stepper input {
+  width: 68px;
+  text-align: center;
+  font-size: 20px;
+  appearance: textfield;
+  padding: 5px;
+}
+.stepper input::-webkit-inner-spin-button {
+  appearance: none;
+}
+.stepper .button {
+  min-width: 48px;
+  padding: 8px;
+}
+.field-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 9px;
+}
+.submit-button {
+  width: 100%;
+  margin-top: 26px;
+  min-height: 50px;
+}
+.privacy-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 17px 0;
+}
+.guest-footer {
+  max-width: 1120px;
+  margin: auto;
+  border-top: 1px solid var(--line);
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+.guest-footer a {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.mobile-invitation-link {
+  display: none;
+}
+.message {
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.error {
+  color: #932d3f;
+  background: #fff0f0;
+  border: 1px solid #eed0d4;
+}
+.notice {
+  color: #48664c;
+  background: #f0f6ed;
+  border: 1px solid #dae6d5;
+}
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--muted);
+  min-height: 150px;
+}
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.switcher {
+  background: var(--cream);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+}
+.switcher label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.switcher select {
+  font-size: 13px;
+}
+.thanks {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.thanks h3 {
+  font-size: 22px;
+}
+.thanks .field-note {
+  max-width: 310px;
+  display: block;
+}
+.success-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #eef3e9;
+  color: #547349;
+}
+.additional {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 19px;
+}
+.additional .button {
+  font-size: 12px;
+}
+.recovery-input {
+  margin-top: 12px;
+  font-size: 11px;
+}
+dialog {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 22px;
+  padding: 30px;
+  max-height: 90dvh;
+  overflow: auto;
+  margin: auto;
+  width: calc(100% - 32px);
+  max-width: 480px;
+}
+dialog::backdrop {
+  background: #34272188;
+  backdrop-filter: blur(4px);
+}
+.invitation-dialog {
+  max-width: 650px;
+  padding: 12px;
+}
+.invitation-dialog img {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+.dialog-close {
+  position: sticky;
+  top: 0;
+}
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.dialog-heading h2,
+.confirm-dialog h2 {
+  font-size: 22px;
+  font-weight: 500;
+}
+.confirm-dialog p {
+  margin: 18px 0 25px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.login-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background:
+    radial-gradient(ellipse at 50% 30%, #f1e0df, transparent 60%), var(--cream);
+}
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  min-height: 44px;
+  margin-bottom: 15px;
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 36px;
+  text-align: center;
+}
+.login-card .section-marker {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 18px;
+}
+.login-card h1 {
+  font-size: 28px;
+  margin: 8px 0;
+}
+.login-card > p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.login-card form {
+  margin: 26px 0;
+  text-align: right;
+}
+.login-card .field-note {
+  justify-content: center;
+}
+.admin-page {
+  min-height: 100dvh;
+}
+.admin-header {
+  max-width: 1300px;
+  border-bottom: 1px solid var(--line);
+}
+.brand small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.admin-main {
+  max-width: 1240px;
+  padding: 38px 32px;
+  margin: auto;
+}
+.admin-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.admin-title h1 {
+  font-size: 32px;
+  font-weight: 500;
+  margin: 8px 0;
+}
+.admin-title p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 32px;
+}
+.stat {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  padding: 22px;
+  position: relative;
+}
+.stat svg {
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  color: var(--rose);
+}
+.stat strong {
+  display: block;
+  font-size: 38px;
+  line-height: 1.3;
+  font-weight: 400;
+  margin: 10px 0;
+}
+.stat span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+.admin-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 12px 3px;
+  color: var(--muted);
+  font-size: 14px;
+  min-height: 46px;
+}
+.admin-tabs .active {
+  color: var(--rose);
+  border-bottom-color: var(--rose);
+}
+.admin-content {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.search-field {
+  position: relative;
+  flex: 1;
+}
+.search-field svg {
+  position: absolute;
+  right: 14px;
+  top: 15px;
+  color: var(--muted);
+}
+.search-field input {
+  padding-right: 42px;
+}
+.list-toolbar > select {
+  max-width: 175px;
+}
+.table-scroll {
+  overflow: auto;
+}
+.guest-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-size: 13px;
+  text-align: right;
+}
+.guest-table th {
+  background: #faf7f2;
+  font-weight: 400;
+  color: var(--muted);
+  padding: 14px 20px;
+}
+.guest-table td {
+  border-top: 1px solid #f0e8e0;
+  padding: 12px 20px;
+}
+.guest-name {
+  font-weight: 600;
+}
+.row-actions {
+  display: flex;
+}
+.row-actions .button {
+  padding: 8px;
+  min-width: 44px;
+}
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 11px;
+  border-radius: 20px;
+}
+.status-yes {
+  background: #edf3e8;
+  color: #466740;
+}
+.status-no {
+  background: #f1eeee;
+  color: #73635e;
+}
+.status-maybe {
+  background: #fbefd7;
+  color: #856220;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 55px 24px;
+  color: var(--muted);
+}
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.empty-state p {
+  font-size: 13px;
+}
+.empty-state svg {
+  color: var(--rose);
+}
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.content-heading {
+  padding: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.content-heading h2 {
+  font-size: 21px;
+  font-weight: 500;
+}
+.content-heading p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.duplicate-card {
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.duplicate-score {
+  font-size: 12px;
+  color: var(--gold);
+}
+.duplicate-records {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 15px 0;
+}
+.duplicate-records strong,
+.duplicate-records span,
+.duplicate-records small {
+  display: block;
+}
+.duplicate-records span {
+  font-size: 13px;
+}
+.duplicate-records small {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 6px;
+}
+.duplicate-card > label {
+  display: block;
+  font-size: 13px;
+  margin: 10px 0 16px;
+}
+.duplicate-card select {
+  margin-top: 8px;
+}
+.audit-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.audit-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 24px;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.audit-list time {
+  color: var(--muted);
+}
+.registration-settings {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  .guest-main {
+    gap: 30px;
+    padding: 0 22px;
+  }
+  .rsvp-card {
+    padding: 22px;
+  }
+  .invitation-copy h1 span {
+    font-size: 60px;
+  }
+  .admin-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 680px) {
+  .site-header {
+    padding: 18px 22px;
+  }
+  .brand {
+    font-size: 12px;
+  }
+  .brand-monogram {
+    width: 35px;
+    height: 35px;
+    font-size: 22px;
+  }
+  .guest-main {
+    display: block;
+    padding: 0 20px;
+    margin: 12px auto 24px;
+    max-width: 500px;
+  }
+  .invitation-panel {
+    display: none;
+  }
+  .invitation-copy {
+    padding: 0 12px 20px;
+  }
+  .invitation-copy h1 {
+    font-size: 24px;
+  }
+  .invitation-copy h1 span {
+    font-size: 64px;
+  }
+  .invitation-copy > p {
+    font-size: 13px;
+  }
+  .event-details {
+    padding: 15px 0;
+    margin-bottom: 20px;
+  }
+  .event-details > div {
+    gap: 8px;
+  }
+  .event-details strong {
+    font-size: 13px;
+  }
+  .card-heading h2 {
+    font-size: 18px;
+  }
+  .card-heading p {
+    font-size: 11px;
+  }
+  .rsvp-card {
+    padding: 22px 19px;
+  }
+  .attendance-options {
+    gap: 7px;
+  }
+  .mobile-invitation-link {
+    display: block;
+    margin: auto;
+    background: transparent;
+    border: 0;
+    color: var(--gold);
+    font-size: 12px;
+    text-decoration: underline;
+    min-height: 44px;
+  }
+  .guest-footer {
+    padding: 14px 22px;
+    font-size: 11px;
+  }
+  .admin-header {
+    padding: 16px 20px;
+  }
+  .admin-main {
+    padding: 25px 16px;
+  }
+  .admin-title h1 {
+    font-size: 27px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    padding: 15px;
+  }
+  .stat strong {
+    font-size: 32px;
+  }
+  .stat svg {
+    top: 15px;
+    left: 15px;
+    width: 17px;
+  }
+  .admin-tabs {
+    gap: 16px;
+  }
+  .admin-tabs button {
+    font-size: 12px;
+  }
+  .list-toolbar {
+    padding: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .search-field {
+    flex-basis: 100%;
+  }
+  .list-toolbar > select {
+    max-width: none;
+    flex: 1;
+  }
+  .guest-table td,
+  .guest-table th {
+    padding: 10px 13px;
+  }
+  .pagination {
+    padding: 10px;
+  }
+  .pagination .button {
+    padding: 8px;
+  }
+  .registration-settings {
+    flex-wrap: wrap;
+  }
+  .duplicate-records {
+    gap: 10px;
+  }
+  .duplicate-card {
+    margin: 12px;
+    padding: 15px;
+  }
+  .login-page {
+    padding: 20px;
+  }
+  .login-card {
+    padding: 30px 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
