@@ -513,10 +513,6 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
           </button>
         </section>
       </main>
-      <footer className="guest-footer">
-        <span>באהבה, {invitation.hosts}</span>
-        <a href="/admin">כניסה לניהול</a>
-      </footer>
       <dialog
         ref={dialog}
         className="invitation-dialog"
