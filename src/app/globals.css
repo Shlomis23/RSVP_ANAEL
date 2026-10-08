@@ -290,9 +290,19 @@ p {
   font-size: 16px;
 }
 .venue-navigation .button {
-  border-color: #d9bdc3;
-  color: var(--rose);
-  background: var(--paper);
+  min-height: 44px;
+  padding: 7px 14px;
+  font-size: 16px;
+  font-weight: 500;
+  gap: 7px;
+  border-color: var(--line);
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+}
+.venue-navigation .button svg {
+  width: 16px;
+  height: 16px;
 }
 .rsvp-card {
   background: var(--paper);
