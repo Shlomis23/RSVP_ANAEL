@@ -152,9 +152,7 @@ fieldset {
   color: var(--gold);
 }
 .guest-page {
-  background:
-    radial-gradient(ellipse at 15% 20%, #f0e4de 0, transparent 45%),
-    var(--cream);
+  background: linear-gradient(180deg, #fffaf4 0%, #faeee9 38%, #f2dcd9 100%);
   min-height: 100vh;
 }
 .guest-main {
