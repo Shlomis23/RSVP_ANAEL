@@ -89,6 +89,7 @@ export function Admin() {
   const handleError = useCallback(
     (err: unknown) => {
       if (err instanceof RequestError && err.status === 401) {
+        setData(null);
         router.replace("/admin/login");
         return;
       }
@@ -315,6 +316,26 @@ export function Admin() {
     not_duplicate: "סימון אישורים נפרדים",
     registration_settings: "שינוי מצב הרשמה",
   };
+  if (!data) {
+    return (
+      <main id="main" className="login-page" aria-busy={loading}>
+        {error ? (
+          <section className="login-card">
+            <p role="alert" className="message error">
+              {error}
+            </p>
+            <Button variant="outline" onClick={() => void load()}>
+              ניסיון נוסף
+            </Button>
+          </section>
+        ) : (
+          <p className="loading" role="status">
+            טוענים…
+          </p>
+        )}
+      </main>
+    );
+  }
   return (
     <div className="admin-page">
       <header className="admin-header">

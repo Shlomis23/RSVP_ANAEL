@@ -3,6 +3,7 @@ import { z } from "zod";
 import { pool } from "./db";
 import { newToken, tokenHash } from "./crypto";
 import { allowedOrigins } from "./origins";
+import { adminSessionId } from "./admin-session";
 
 export class ApiError extends Error {
   constructor(
@@ -134,14 +135,7 @@ export async function requireSession(request: NextRequest) {
 }
 export async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(adminCookie())?.value;
-  const credential = process.env.ADMIN_PASSWORD_HASH;
-  if (!token || !credential)
-    return fail(401, "UNAUTHORIZED", "יש להיכנס למסך הניהול");
-  const result = await pool().query<{ id: string }>(
-    `select id from admin_sessions where session_hash=$1 and credential_version=$2 and revoked_at is null and expires_at>now()`,
-    [tokenHash(token), tokenHash(credential!)],
-  );
-  if (!result.rows[0])
-    return fail(401, "UNAUTHORIZED", "יש להיכנס מחדש למסך הניהול");
-  return result.rows[0].id;
+  const id = await adminSessionId(token);
+  if (!id) return fail(401, "UNAUTHORIZED", "יש להיכנס מחדש למסך הניהול");
+  return id;
 }
