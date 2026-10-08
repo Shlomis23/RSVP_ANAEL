@@ -42,7 +42,7 @@ test("single approval survives reload and stale tabs cannot create another", asy
     await page.getByLabel("כמה תהיו?").fill("4");
     await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
     await expect(
-      page.getByRole("heading", { name: "תודה, התשובה שלכם נשמרה" }),
+      page.getByRole("heading", { name: /תודה!.*התשובה שלכם נשמרה/ }),
     ).toBeVisible();
     const mine = (await (await page.request.get("/api/rsvps/mine")).json())
       .rsvps;
@@ -107,7 +107,7 @@ test("a lost save response can be retried without another approval or recovery c
     await expect(page.getByRole("alert")).toBeVisible();
     await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
     await expect(
-      page.getByRole("heading", { name: "תודה, התשובה שלכם נשמרה" }),
+      page.getByRole("heading", { name: /תודה!.*התשובה שלכם נשמרה/ }),
     ).toBeVisible();
     const mine = (await (await page.request.get("/api/rsvps/mine")).json())
       .rsvps;
@@ -119,3 +119,4 @@ test("a lost save response can be retried without another approval or recovery c
     await cleanup(ids);
   }
 });
+

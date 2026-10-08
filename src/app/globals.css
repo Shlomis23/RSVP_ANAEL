@@ -335,6 +335,32 @@ p {
   font-size: 16px;
   margin-top: 3px;
 }
+.rsvp-card-confirmed {
+  text-align: center;
+}
+.confirmation-heading {
+  margin-bottom: 24px;
+  text-align: center;
+}
+.confirmation-heading h2 span {
+  display: block;
+}
+.confirmation-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.confirmation-saved {
+  font-size: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.confirmation-heading p {
+  margin-top: 12px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 500;
+}
 .fields {
   display: flex;
   flex-direction: column;

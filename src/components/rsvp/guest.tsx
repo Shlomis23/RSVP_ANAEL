@@ -280,34 +280,45 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
               </a>
             </Button>
           </div>
-          <div className="rsvp-card" aria-busy={loading || busy}>
+          <div
+            className={`rsvp-card${mode === "thanks" ? " rsvp-card-confirmed" : ""}`}
+            aria-busy={loading || busy}
+          >
             {loading ? (
               <p className="loading">
                 <RefreshCw className="spin" size={18} /> טוענים את האישור שלכם…
               </p>
             ) : (
               <>
-                <div className="card-heading">
-                  <span className="section-marker">
-                    <Heart size={17} aria-hidden="true" />
-                  </span>
-                  <div>
+                {mode === "thanks" ? (
+                  <div className="confirmation-heading">
                     <h2>
-                      {mode === "thanks"
-                        ? "תודה, התשובה שלכם נשמרה"
-                        : active
+                      <span className="confirmation-title">תודה!</span>
+                      <span className="confirmation-saved">
+                        התשובה שלכם נשמרה
+                      </span>
+                    </h2>
+                    <p>מחכים לחגוג איתכם!</p>
+                  </div>
+                ) : (
+                  <div className="card-heading">
+                    <span className="section-marker">
+                      <Heart size={17} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h2>
+                        {active
                           ? "מעדכנים את האישור שלכם"
                           : "נשמח לדעת אם תגיעו"}
-                    </h2>
-                    <p>
-                      {mode === "thanks"
-                        ? "מחכים לחגוג איתכם"
-                        : active
+                      </h2>
+                      <p>
+                        {active
                           ? "השינויים יישמרו באותו אישור"
                           : "כמה פרטים קטנים, ואנחנו מוכנים לחגוג"}
-                    </p>
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
                 {error && (
                   <div role="alert" className="message error">
                     {error}
