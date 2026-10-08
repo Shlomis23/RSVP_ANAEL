@@ -278,6 +278,24 @@ p {
   color: var(--muted);
   font-size: 16px;
 }
+.venue-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 18px;
+  margin: -4px 0 24px;
+  text-align: center;
+}
+.venue-navigation p {
+  color: var(--muted);
+  font-size: 16px;
+}
+.venue-navigation .button {
+  border-color: #d9bdc3;
+  color: var(--rose);
+  background: var(--paper);
+}
 .rsvp-card {
   background: var(--paper);
   border: 1px solid var(--line);

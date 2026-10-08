@@ -6,6 +6,7 @@ import {
   Copy,
   Heart,
   MapPin,
+  Navigation,
   Pencil,
   Plus,
   RefreshCw,
@@ -13,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { api, messageOf, RequestError } from "@/lib/client";
-import { attendanceLabels, invitation, type Rsvp } from "@/lib/event";
+import { attendanceLabels, invitation, wazeUrl, type Rsvp } from "@/lib/event";
 import { Button } from "@/components/ui/button";
 import { emptyForm, RsvpFields, type FormValues } from "./fields";
 
@@ -301,6 +302,20 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
                 <small>{invitation.city}</small>
               </span>
             </div>
+          </div>
+          <div className="venue-navigation">
+            <p>{invitation.address}</p>
+            <Button asChild variant="outline">
+              <a
+                href={wazeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`ניווט ב־Waze אל ${invitation.venue}, ${invitation.address}`}
+              >
+                <Navigation size={19} aria-hidden="true" />
+                ניווט ב־Waze
+              </a>
+            </Button>
           </div>
           <div className="rsvp-card" aria-busy={loading || busy}>
             {loading ? (
