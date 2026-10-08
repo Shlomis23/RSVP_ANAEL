@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { api, messageOf, RequestError } from "@/lib/client";
+import { describeAudit, type AuditEntry } from "@/lib/audit-description";
 import {
   attendanceLabels,
   invitation,
@@ -42,12 +43,6 @@ type Data = {
   event: { isActive: boolean; registrationClosesAt: string | null };
 };
 type Pair = { first: Rsvp; second: Rsvp; score: number };
-type Entry = {
-  action: string;
-  rsvp_id: string | null;
-  created_at: string;
-  details: Record<string, unknown>;
-};
 const date = (value: string) =>
   new Intl.DateTimeFormat("he-IL", {
     timeZone: "Asia/Jerusalem",
@@ -65,7 +60,7 @@ export function Admin() {
   const [tab, setTab] = useState<"guests" | "duplicates" | "audit">("guests");
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [pairTotal, setPairTotal] = useState(0);
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -122,7 +117,7 @@ export function Admin() {
           setPairTotal(duplicates.total);
         }
         if (tab === "audit") {
-          const audit = await api<{ entries: Entry[] }>("admin/audit", {
+          const audit = await api<{ entries: AuditEntry[] }>("admin/audit", {
             signal,
           });
           setEntries(audit.entries);
@@ -308,14 +303,6 @@ export function Admin() {
       },
     });
   }
-  const actionLabels: Record<string, string> = {
-    create: "הוספת אישור",
-    update: "עריכת אישור",
-    archive: "מחיקת אישור",
-    merge: "איחוד אישורים",
-    not_duplicate: "סימון אישורים נפרדים",
-    registration_settings: "שינוי מצב הרשמה",
-  };
   if (!data) {
     return (
       <main id="main" className="login-page" aria-busy={loading}>
@@ -580,14 +567,26 @@ export function Admin() {
                 <p>100 הפעולות האחרונות, לפי שעון ישראל</p>
               </div>
               <ul className="audit-list">
-                {entries.map((entry, i) => (
-                  <li key={`${entry.created_at}:${i}`}>
-                    <strong>
-                      {actionLabels[entry.action] ?? entry.action}
-                    </strong>
-                    <time>{date(entry.created_at)}</time>
-                  </li>
-                ))}
+                {entries.map((entry, i) => {
+                  const description = describeAudit(entry);
+                  return (
+                    <li key={entry.id ?? `${entry.created_at}:${i}`}>
+                      <div className="audit-details">
+                        <strong>{description.title}</strong>
+                        {description.lines.length > 0 && (
+                          <ul>
+                            {description.lines.map((line, index) => (
+                              <li key={index}>{line}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <time dateTime={entry.created_at}>
+                        {date(entry.created_at)}
+                      </time>
+                    </li>
+                  );
+                })}
               </ul>
               {!loading && entries.length === 0 && (
                 <p className="empty-state">עדיין לא בוצעו פעולות ניהול</p>

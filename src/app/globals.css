@@ -888,7 +888,7 @@ dialog::backdrop {
   padding: 0;
   margin: 0;
 }
-.audit-list li {
+.audit-list > li {
   display: flex;
   justify-content: space-between;
   padding: 18px 24px;
@@ -898,6 +898,32 @@ dialog::backdrop {
 }
 .audit-list time {
   color: var(--muted);
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.audit-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.audit-details > strong {
+  display: block;
+  font-size: 18px;
+}
+.audit-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+.audit-details li + li {
+  margin-top: 6px;
+}
+@media (max-width: 680px) {
+  .audit-list > li {
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px 20px;
+  }
 }
 .registration-settings {
   display: flex;

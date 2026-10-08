@@ -378,6 +378,7 @@ async function dispatch(request: NextRequest, context: Context) {
           await audit(client, event.id, "not_duplicate", first.id, {
             firstId: first.id,
             secondId: second.id,
+            before: [first, second],
           });
         await client.query(
           `insert into duplicate_decisions(event_id,first_id,second_id,decision,first_version,second_version)
@@ -468,7 +469,13 @@ async function dispatch(request: NextRequest, context: Context) {
     }
     if (path.join("/") === "admin/audit" && method === "GET") {
       const rows = await pool().query(
-        "select action,rsvp_id,details,created_at from admin_audit where event_id=$1 order by created_at desc limit 100",
+        `select a.id,a.action,a.rsvp_id,a.details,a.created_at,
+            r.full_name as current_name,f.full_name as first_current_name,s.full_name as second_current_name
+           from (select * from admin_audit where event_id=$1 order by created_at desc,id desc limit 100) a
+           left join rsvps r on r.id=a.rsvp_id and r.event_id=a.event_id
+           left join rsvps f on f.id::text=a.details->>'firstId' and f.event_id=a.event_id
+           left join rsvps s on s.id::text=a.details->>'secondId' and s.event_id=a.event_id
+           order by a.created_at desc,a.id desc`,
         [event.id],
       );
       return json({ entries: rows.rows });
