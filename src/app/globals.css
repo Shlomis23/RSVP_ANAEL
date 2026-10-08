@@ -936,10 +936,19 @@ dialog::backdrop {
     margin-bottom: 20px;
   }
   .event-details > div {
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
+    padding-inline: 6px;
   }
   .event-details strong {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  .event-details small {
+    font-size: 14px;
+  }
+  .event-details svg {
+    width: 18px;
+    height: 18px;
   }
   .card-heading h2 {
     font-size: 24px;
@@ -1049,11 +1058,13 @@ dialog::backdrop {
 
 @media (max-width: 400px) {
   .event-details {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .event-details > div + div {
-    border-right: 0;
+  .event-details strong {
+    font-size: 15px;
+  }
+  .event-details small {
+    font-size: 13px;
   }
   .guest-footer,
   .pagination {
