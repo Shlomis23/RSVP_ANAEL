@@ -252,10 +252,6 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
   return (
     <div className="guest-page">
       <header className="site-header">
-        <a className="brand" href="/" aria-label="הבריתה של אנאל">
-          <span className="brand-monogram">א</span>
-          <span>הבריתה של אנאל</span>
-        </a>
         <span className="blessing">בס״ד</span>
       </header>
       <main id="main" className="guest-main">
@@ -281,7 +277,7 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
               IT’S A GIRL!
             </span>
             <h1 id="rsvp-heading">
-              חוגגים את <span>אנאל</span>
+              <span>אנאל</span>
             </h1>
             <p>
               {invitation.text} <strong>אנאל</strong>.
