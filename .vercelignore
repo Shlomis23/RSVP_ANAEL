@@ -1,0 +1,10 @@
+.git/
+.agents/
+.next/
+node_modules/
+work/
+test-results/
+playwright-report/
+.env*
+.neon
+*.tsbuildinfo

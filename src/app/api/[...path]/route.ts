@@ -41,10 +41,8 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
-const recoveryUrl = (token: string | null) =>
-  token
-    ? `${new URL(process.env.APP_ORIGIN!).origin}/edit#token=${token}`
-    : null;
+const recoveryUrl = (token: string | null, request: NextRequest) =>
+  token ? `${assertOrigin(request)}/edit#token=${token}` : null;
 const rowId = (value: string) => {
   if (!idInput.safeParse(value).success)
     fail(404, "NOT_FOUND", "האישור לא נמצא");
@@ -111,7 +109,7 @@ async function dispatch(request: NextRequest, context: Context) {
       {
         ...result,
         recoveryToken: undefined,
-        recoveryUrl: recoveryUrl(result.recoveryToken),
+        recoveryUrl: recoveryUrl(result.recoveryToken, request),
       },
       result.replayed ? 200 : 201,
     );
@@ -143,7 +141,7 @@ async function dispatch(request: NextRequest, context: Context) {
     if (path[2] === "recovery" && path.length === 3 && method === "POST") {
       await rateLimit(request, "recovery", 10, 600, session);
       return json({
-        recoveryUrl: recoveryUrl(await rotateRecovery(session, id)),
+        recoveryUrl: recoveryUrl(await rotateRecovery(session, id), request),
       });
     }
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { pool } from "./db";
 import { newToken, tokenHash } from "./crypto";
+import { allowedOrigins } from "./origins";
 
 export class ApiError extends Error {
   constructor(
@@ -40,14 +41,16 @@ export function setCookie(
   });
 }
 export function assertOrigin(request: NextRequest) {
-  const configured = process.env.APP_ORIGIN;
-  if (!configured)
+  const configured = allowedOrigins();
+  const origin = request.headers.get("origin");
+  if (!configured.size)
     fail(503, "CONFIGURATION_ERROR", "המערכת עדיין לא הוגדרה לפרסום");
-  if (request.headers.get("origin") !== new URL(configured!).origin)
+  if (!origin || !configured.has(origin))
     fail(403, "FORBIDDEN", "הבקשה אינה מורשית");
   const site = request.headers.get("sec-fetch-site");
   if (site && site !== "same-origin" && site !== "none")
     fail(403, "FORBIDDEN", "הבקשה אינה מורשית");
+  return origin!;
 }
 export async function body<T>(
   request: NextRequest,
