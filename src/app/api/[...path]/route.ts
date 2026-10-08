@@ -34,15 +34,12 @@ import {
   createRsvp,
   currentEvent,
   ownedRsvp,
-  rotateRecovery,
   updateRsvp,
 } from "@/lib/rsvps";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
-const recoveryUrl = (token: string | null, request: NextRequest) =>
-  token ? `${assertOrigin(request)}/edit#token=${token}` : null;
 const rowId = (value: string) => {
   if (!idInput.safeParse(value).success)
     fail(404, "NOT_FOUND", "האישור לא נמצא");
@@ -105,14 +102,7 @@ async function dispatch(request: NextRequest, context: Context) {
     await rateLimit(request, "create", 30, 600, session);
     await rateLimit(request, "create-global", 300);
     const result = await createRsvp(session, await body(request, createInput));
-    return json(
-      {
-        ...result,
-        recoveryToken: undefined,
-        recoveryUrl: recoveryUrl(result.recoveryToken, request),
-      },
-      result.replayed ? 200 : 201,
-    );
+    return json(result, result.replayed ? 200 : 201);
   }
   if (path.join("/") === "rsvps/claim" && method === "POST") {
     await rateLimit(request, "claim", 30);
@@ -136,12 +126,6 @@ async function dispatch(request: NextRequest, context: Context) {
       await rateLimit(request, "update", 60, 600, session);
       return json({
         rsvp: await updateRsvp(session, id, await body(request, updateInput)),
-      });
-    }
-    if (path[2] === "recovery" && path.length === 3 && method === "POST") {
-      await rateLimit(request, "recovery", 10, 600, session);
-      return json({
-        recoveryUrl: recoveryUrl(await rotateRecovery(session, id), request),
       });
     }
   }

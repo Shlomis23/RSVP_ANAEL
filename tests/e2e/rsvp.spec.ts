@@ -1,101 +1,121 @@
 import { test, expect } from "@playwright/test";
 import { config } from "dotenv";
 import { randomUUID } from "node:crypto";
-config({ path: "work/.env.tests", quiet: true });
+import { Client } from "pg";
+config({ path: ".env.local", quiet: true });
+if (!process.env.NEON_BRANCH || process.env.NEON_BRANCH === "production")
+  throw new Error("Guest browser tests require a development branch");
+async function cleanup(ids: string[]) {
+  const url = new URL(process.env.DATABASE_URL_UNPOOLED!);
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("channel_binding");
+  const db = new Client({
+    connectionString: url.toString(),
+    ssl: { rejectUnauthorized: true },
+  });
+  await db.connect();
+  try {
+    await db.query("delete from rsvps where id=any($1::uuid[])", [ids]);
+  } finally {
+    await db.end();
+  }
+}
 
-test("guest lifecycle, browser switching, recovery and protected management", async ({
+test("single approval survives reload and stale tabs cannot create another", async ({
   page,
+  context,
   browser,
   baseURL,
-}, testInfo) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  const suffix = randomUUID().slice(0, 7);
-  const first = `בדיקת דפדפן ראשון ${suffix}`;
-  const second = `בדיקת דפדפן שני ${suffix}`;
-  await page.goto("/");
-  await expect(
-    page.getByRole("heading", { name: "נשמח לדעת אם תגיעו" }),
-  ).toBeVisible();
-  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await page.screenshot({
-    path: `work/guest-${testInfo.project.name}.png`,
-    fullPage: true,
-  });
-  await page.getByLabel("שם מלא").fill(first);
-  await page.getByRole("radio", { name: "מגיעים", exact: true }).check();
-  await page.getByLabel("כמה תהיו?").fill("4");
-  await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
-  await expect(
-    page.getByRole("heading", { name: "תודה, התשובה שלכם נשמרה" }),
-  ).toBeVisible();
-  const link = await page.getByLabel("קישור שחזור אישי").inputValue();
-  await page.getByRole("button", { name: "עריכת האישור" }).click();
-  await page.getByLabel("כמה תהיו?").fill("2");
-  await page.getByRole("button", { name: "שמירת השינויים" }).click();
-  await expect(
-    page.getByText("מגיעים · 2 משתתפים", { exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "אישור הגעה נוסף", exact: true })
-    .click();
-  await expect(page.getByLabel("שם מלא")).toHaveValue("");
-  await page.getByLabel("שם מלא").fill(second);
-  await page.getByRole("radio", { name: "מתלבטים", exact: true }).check();
-  await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
-  await page.getByLabel("החלפת אישור").selectOption({ label: first });
-  await expect(page.getByLabel("שם מלא")).toHaveValue(first);
-  await expect(page.getByLabel("כמה תהיו?")).toHaveValue("2");
-  await page.reload();
-  await expect(page.getByLabel("שם מלא")).toHaveValue(first);
-  const fresh = await browser.newContext();
-  const recovery = await fresh.newPage();
-  await recovery.goto(link);
-  await expect(recovery.getByLabel("שם מלא")).toHaveValue(first);
-  expect(new URL(recovery.url()).hash).toBe("");
-  await recovery.getByRole("radio", { name: "לא מגיעים", exact: true }).check();
-  await recovery.getByRole("button", { name: "שמירת השינויים" }).click();
-  await expect(recovery.getByText("לא מגיעים", { exact: true })).toBeVisible();
-  await fresh.close();
-  const stranger = await browser.newContext();
-  const forbidden = await stranger.request.get(`${baseURL}/api/admin/rsvps`);
-  expect(forbidden.status()).toBe(401);
-  await stranger.close();
-  await page.goto("/admin");
-  await expect(
-    page.getByRole("heading", { name: "כניסה לניהול" }),
-  ).toBeVisible();
-  await page.getByLabel("סיסמת ניהול").fill(process.env.TEST_ADMIN_PASSWORD!);
-  await page.getByRole("button", { name: "כניסה", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "כל מי שחוגג איתנו" }),
-  ).toBeVisible();
-  await page.getByLabel("חיפוש לפי שם").fill(suffix);
-  await expect(page.locator("tbody tr")).toHaveCount(2);
-  await page.screenshot({
-    path: `work/admin-${testInfo.project.name}.png`,
-    fullPage: true,
-  });
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "ייצוא Excel" }).click();
-  expect((await download).suggestedFilename()).toBe("anael-rsvp.xlsx");
-  for (const name of [first, second]) {
-    await page
-      .getByRole("button", { name: `מחיקת ${name}`, exact: true })
-      .click();
+}) => {
+  const ids: string[] = [];
+  const name = `בדיקת דפדפן ${randomUUID().slice(0, 7)}`;
+  try {
+    await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "מחיקת אישור", exact: true }),
+      page.getByRole("heading", { name: "נשמח לדעת אם תגיעו" }),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "אישור הפעולה", exact: true })
-      .click();
+    const stale = await context.newPage();
+    await stale.goto("/");
+    await expect(stale.getByLabel("שם מלא")).toBeVisible();
+    await page.getByLabel("שם מלא").fill(name);
+    await page.getByRole("radio", { name: "מגיעים", exact: true }).check();
+    await page.getByLabel("כמה תהיו?").fill("4");
+    await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
     await expect(
-      page.getByRole("button", { name: `מחיקת ${name}`, exact: true }),
+      page.getByRole("heading", { name: "תודה, התשובה שלכם נשמרה" }),
+    ).toBeVisible();
+    const mine = (await (await page.request.get("/api/rsvps/mine")).json())
+      .rsvps;
+    ids.push(...mine.map((r: { id: string }) => r.id));
+    expect(mine).toHaveLength(1);
+    await expect(
+      page.getByRole("button", { name: /אישור הגעה נוסף|קישור שחזור/ }),
     ).toHaveCount(0);
+    await expect(page.getByLabel("קישור שחזור אישי")).toHaveCount(0);
+    await stale.getByLabel("שם מלא").fill(name + " נוסף");
+    await stale.getByRole("radio", { name: "מגיעים", exact: true }).check();
+    await stale.getByRole("button", { name: "שליחת אישור הגעה" }).click();
+    await expect(stale.getByLabel("שם מלא")).toHaveValue(name);
+    await expect(
+      stale.getByRole("heading", { name: "מעדכנים את האישור שלכם" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "עריכת האישור" }).click();
+    await page.getByLabel("כמה תהיו?").fill("2");
+    await page.getByRole("button", { name: "שמירת השינויים" }).click();
+    await expect(
+      page.getByText("מגיעים · 2 משתתפים", { exact: true }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel("שם מלא")).toHaveValue(name);
+    await expect(page.getByLabel("כמה תהיו?")).toHaveValue("2");
+    expect(
+      (await (await page.request.get("/api/rsvps/mine")).json()).rsvps,
+    ).toHaveLength(1);
+    const other = await browser.newContext();
+    expect(
+      (await other.request.get(`${baseURL}/api/rsvps/${ids[0]}`)).status(),
+    ).toBe(401);
+    await other.close();
+  } finally {
+    await cleanup(ids);
   }
-  await page.getByRole("button", { name: "יציאה", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "כניסה לניהול" }),
-  ).toBeVisible();
-  expect(errors).toEqual([]);
+});
+
+test("a lost save response can be retried without another approval or recovery controls", async ({
+  page,
+}) => {
+  const ids: string[] = [];
+  let first = true;
+  try {
+    await page.goto("/");
+    await expect(page.getByLabel("שם מלא")).toBeVisible();
+    await page.route("**/api/rsvps", async (route) => {
+      if (first && route.request().method() === "POST") {
+        first = false;
+        const response = await route.fetch();
+        const data = await response.json();
+        ids.push(data.rsvp.id);
+        expect(data).not.toHaveProperty("recoveryUrl");
+        await route.abort("failed");
+      } else await route.continue();
+    });
+    await page
+      .getByLabel("שם מלא")
+      .fill(`בדיקת שליחה ${randomUUID().slice(0, 7)}`);
+    await page.getByRole("radio", { name: "מגיעים", exact: true }).check();
+    await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
+    await expect(page.getByRole("alert")).toBeVisible();
+    await page.getByRole("button", { name: "שליחת אישור הגעה" }).click();
+    await expect(
+      page.getByRole("heading", { name: "תודה, התשובה שלכם נשמרה" }),
+    ).toBeVisible();
+    const mine = (await (await page.request.get("/api/rsvps/mine")).json())
+      .rsvps;
+    expect(mine.map((r: { id: string }) => r.id)).toEqual(ids);
+    await expect(
+      page.getByRole("button", { name: /אישור הגעה נוסף|קישור שחזור/ }),
+    ).toHaveCount(0);
+  } finally {
+    await cleanup(ids);
+  }
 });

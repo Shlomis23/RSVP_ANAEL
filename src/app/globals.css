@@ -486,22 +486,6 @@ p {
     transform: rotate(360deg);
   }
 }
-.switcher {
-  background: var(--cream);
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 18px;
-}
-.switcher label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 16px;
-  margin-bottom: 6px;
-}
-.switcher select {
-  font-size: 18px;
-}
 .thanks {
   text-align: center;
   display: flex;
@@ -524,21 +508,6 @@ p {
   border-radius: 50%;
   background: #eef3e9;
   color: #547349;
-}
-.additional {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-  margin-top: 19px;
-}
-.additional .button {
-  font-size: 18px;
-}
-.recovery-input {
-  margin-top: 12px;
-  font-size: 15px;
 }
 dialog {
   border: 1px solid var(--line);

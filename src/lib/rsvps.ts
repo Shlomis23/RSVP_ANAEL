@@ -1,7 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 import { pool, transaction } from "./db";
 import { fail } from "./security";
-import { newToken, tokenHash } from "./crypto";
+import { tokenHash } from "./crypto";
 import { normalizeName } from "./validation";
 import type { Attendance, Rsvp } from "./event";
 
@@ -52,7 +52,11 @@ export async function ownedRsvp(
     [id, session, event.id],
   );
   if (!result.rows[0])
-    return fail(404, "NOT_FOUND", "האישור אינו זמין. נסו קישור שחזור תקף");
+    return fail(
+      404,
+      "NOT_FOUND",
+      "האישור אינו זמין. נסו שוב מאותו דפדפן שבו מילאתם אותו",
+    );
   return result.rows[0];
 }
 export async function createRsvp(
@@ -72,7 +76,6 @@ export async function createRsvp(
     if (previous.rows[0])
       return {
         rsvp: await ownedRsvp(session, previous.rows[0].id, client),
-        recoveryToken: null,
         replayed: true,
       };
     const validSession = await client.query(
@@ -80,6 +83,16 @@ export async function createRsvp(
       [session],
     );
     if (!validSession.rowCount) fail(401, "UNAUTHORIZED", "ההרשאה פגה");
+    const existing = await client.query(
+      `select r.id from rsvps r join session_rsvps sr on sr.rsvp_id=r.id where sr.session_id=$1 and r.event_id=$2 and r.archived_at is null limit 1`,
+      [session, event.id],
+    );
+    if (existing.rowCount)
+      fail(
+        409,
+        "EXISTING_RSVP",
+        "כבר קיים אישור בדפדפן הזה. יש לערוך את האישור הקיים",
+      );
     const result = await client.query<Rsvp>(
       `insert into rsvps(event_id,full_name,normalized_name,attendance,guest_count,request_key)
       values($1,$2,$3,$4,$5,$6) returning ${columns}`,
@@ -93,16 +106,11 @@ export async function createRsvp(
       ],
     );
     const rsvp = result.rows[0];
-    const recoveryToken = newToken();
     await client.query(
       "insert into session_rsvps(session_id,rsvp_id) values($1,$2)",
       [session, rsvp.id],
     );
-    await client.query(
-      "insert into rsvp_recovery_tokens(rsvp_id,token_hash,expires_at) values($1,$2,now()+interval '90 days')",
-      [rsvp.id, tokenHash(recoveryToken)],
-    );
-    return { rsvp, recoveryToken, replayed: false };
+    return { rsvp, replayed: false };
   });
 }
 export async function updateRsvp(
@@ -153,22 +161,6 @@ export async function claimRsvp(session: string, token: string) {
       [session, result.rows[0].rsvp_id],
     );
     return ownedRsvp(session, result.rows[0].rsvp_id, client);
-  });
-}
-export async function rotateRecovery(session: string, id: string) {
-  return transaction(async (client) => {
-    await client.query("select id from rsvps where id=$1 for update", [id]);
-    await ownedRsvp(session, id, client);
-    const token = newToken();
-    await client.query(
-      "update rsvp_recovery_tokens set revoked_at=now() where rsvp_id=$1 and revoked_at is null",
-      [id],
-    );
-    await client.query(
-      "insert into rsvp_recovery_tokens(rsvp_id,token_hash,expires_at) values($1,$2,now()+interval '90 days')",
-      [id, tokenHash(token)],
-    );
-    return token;
   });
 }
 export async function audit(

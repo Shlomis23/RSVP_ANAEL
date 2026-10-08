@@ -130,7 +130,11 @@ export async function ensureSession(request: NextRequest) {
 export async function requireSession(request: NextRequest) {
   const id = await getSession(request);
   if (!id)
-    return fail(401, "UNAUTHORIZED", "ההרשאה פגה. השתמשו בקישור השחזור האישי");
+    return fail(
+      401,
+      "UNAUTHORIZED",
+      "לא ניתן לזהות את האישור בדפדפן הזה. נסו את הדפדפן שבו מילאתם אותו",
+    );
   return id;
 }
 export async function requireAdmin(request: NextRequest) {

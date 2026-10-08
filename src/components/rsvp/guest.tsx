@@ -3,15 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
   Check,
-  Copy,
   Heart,
   MapPin,
   Navigation,
   Pencil,
-  Plus,
   RefreshCw,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 import { api, messageOf, RequestError } from "@/lib/client";
 import { attendanceLabels, invitation, wazeUrl, type Rsvp } from "@/lib/event";
@@ -39,14 +36,12 @@ function writeLocal(key: string, value: string | null) {
 
 export function Guest({ recovery = false }: { recovery?: boolean }) {
   const [values, setValues] = useState<FormValues>(emptyForm);
-  const [mine, setMine] = useState<Mine[]>([]);
   const [active, setActive] = useState<Rsvp | null>(null);
   const [mode, setMode] = useState<"form" | "thanks">("form");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [link, setLink] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
   const [showInvitation, setShowInvitation] = useState(false);
   const operation = useRef(0);
@@ -69,12 +64,6 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
     });
     writeLocal(activeKey, record.id);
     setMode(thanks ? "thanks" : "form");
-    setLink(null);
-  }
-  async function refreshMine() {
-    const result = await api<{ rsvps: Mine[] }>("rsvps/mine");
-    setMine(result.rsvps);
-    return result.rsvps;
   }
   useEffect(() => {
     let cancelled = false;
@@ -113,12 +102,13 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
         const result = await initialization.current!;
         if (cancelled) return;
         setOpen(result.open);
-        setMine(result.list);
         if (result.record) select(result.record);
         else {
           writeLocal(activeKey, null);
           if (recovery)
-            setNotice("פתחו את קישור השחזור ששמרתם, או מלאו אישור חדש");
+            setNotice(
+              "לעריכת אישור קיים, פתחו את האתר באותו דפדפן שבו מילאתם אותו",
+            );
         }
         if (result.claimed)
           setNotice("האישור שלכם שוחזר. אפשר לעדכן את הפרטים");
@@ -146,13 +136,11 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
     setBusy(true);
     setError("");
     setNotice("");
-    setLink(null);
     try {
       const result = await api<{ rsvp: Rsvp }>(`rsvps/${id}`);
       if (operation.current === current) select(result.rsvp);
     } catch (err) {
       if (err instanceof RequestError && [401, 404].includes(err.status)) {
-        setMine((old) => old.filter((r) => r.id !== id));
         if (active?.id === id) {
           setActive(null);
           setValues(emptyForm);
@@ -163,19 +151,6 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
     } finally {
       if (operation.current === current) setBusy(false);
     }
-  }
-  function newApproval() {
-    if (busy) return;
-    ++operation.current;
-    setActive(null);
-    setValues(emptyForm);
-    setMode("form");
-    setLink(null);
-    setError("");
-    setNotice("ממלאים אישור נוסף. האישורים הקודמים נשמרים ללא שינוי");
-    pendingKey.current = null;
-    writeLocal(activeKey, null);
-    writeLocal(requestKey, null);
   }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -205,48 +180,36 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
         writeLocal(requestKey, key);
         const result = await api<{
           rsvp: Rsvp;
-          recoveryUrl: string | null;
           replayed: boolean;
         }>("rsvps", { method: "POST", body: { ...input, requestKey: key } });
         select(result.rsvp, true);
-        setLink(result.recoveryUrl);
         pendingKey.current = null;
         writeLocal(requestKey, null);
         if (result.replayed)
-          setNotice("האישור כבר נשמר. אפשר להפיק קישור שחזור חדש בכפתור למטה");
+          setNotice("האישור כבר נשמר. אפשר לעדכן אותו מאותו דפדפן");
       }
-      await refreshMine();
     } catch (err) {
-      setError(messageOf(err));
+      if (err instanceof RequestError && err.code === "EXISTING_RSVP") {
+        try {
+          const list = (await api<{ rsvps: Mine[] }>("rsvps/mine")).rsvps;
+          const stored = readLocal(activeKey);
+          const id = list.some((r) => r.id === stored) ? stored : list[0]?.id;
+          if (!id) throw err;
+          select((await api<{ rsvp: Rsvp }>(`rsvps/${id}`)).rsvp);
+          pendingKey.current = null;
+          writeLocal(requestKey, null);
+          setNotice(
+            "כבר קיים אישור בדפדפן הזה. הפרטים הקיימים נטענו ואפשר לעדכן אותם",
+          );
+        } catch (loadError) {
+          setError(messageOf(loadError));
+        }
+      } else {
+        setError(messageOf(err));
+      }
     } finally {
       setBusy(false);
       submitting.current = false;
-    }
-  }
-  async function copyRecovery() {
-    if (!active || busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      let url = link;
-      if (!url) {
-        const result = await api<{ recoveryUrl: string }>(
-          `rsvps/${active.id}/recovery`,
-          { method: "POST" },
-        );
-        url = result.recoveryUrl;
-        setLink(url);
-      }
-      try {
-        await navigator.clipboard.writeText(url!);
-        setNotice("קישור השחזור הועתק. שמרו אותו במקום פרטי");
-      } catch {
-        setNotice("אפשר להעתיק את הקישור מהשדה שמופיע למטה");
-      }
-    } catch (err) {
-      setError(messageOf(err));
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -345,30 +308,6 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
                     </p>
                   </div>
                 </div>
-                {mine.length > 1 && (
-                  <div className="switcher">
-                    <label htmlFor="approval-switch">
-                      <Users size={16} aria-hidden="true" /> החלפת אישור
-                    </label>
-                    <select
-                      id="approval-switch"
-                      value={active?.id ?? ""}
-                      disabled={busy}
-                      onChange={(e) => {
-                        if (e.target.value) void switchTo(e.target.value);
-                      }}
-                    >
-                      <option value="" disabled>
-                        בחרו אישור
-                      </option>
-                      {mine.map((record) => (
-                        <option key={record.id} value={record.id}>
-                          {record.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
                 {error && (
                   <div role="alert" className="message error">
                     {error}
@@ -417,28 +356,10 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
                     >
                       <Pencil size={16} /> עריכת האישור
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() => void copyRecovery()}
-                    >
-                      <Copy size={16} /> העתקת קישור שחזור אישי
-                    </Button>
                     <p className="field-note">
-                      שמרו את הקישור כדי לערוך גם ממכשיר אחר. כל מי שמחזיק בו
-                      יכול לערוך את האישור
+                      לעריכה בהמשך, פתחו את קישור ההזמנה מאותו מכשיר ובאותו
+                      דפדפן שבו מילאתם את האישור.
                     </p>
-                    {link && (
-                      <input
-                        className="recovery-input"
-                        aria-label="קישור שחזור אישי"
-                        dir="ltr"
-                        value={link}
-                        readOnly
-                        onFocus={(e) => e.currentTarget.select()}
-                      />
-                    )}
                   </div>
                 ) : (
                   <form onSubmit={submit}>
@@ -464,38 +385,6 @@ export function Guest({ recovery = false }: { recovery?: boolean }) {
                           : "שליחת אישור הגעה"}
                     </Button>
                   </form>
-                )}
-                {mine.length > 0 && (
-                  <div className="additional">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      disabled={busy || !open}
-                      onClick={newApproval}
-                    >
-                      <Plus size={16} /> אישור הגעה נוסף
-                    </Button>
-                    {mode === "form" && active && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => void copyRecovery()}
-                      >
-                        <Copy size={15} /> קישור שחזור
-                      </Button>
-                    )}
-                  </div>
-                )}
-                {mode === "form" && link && (
-                  <input
-                    className="recovery-input"
-                    aria-label="קישור שחזור אישי"
-                    dir="ltr"
-                    value={link}
-                    readOnly
-                    onFocus={(e) => e.currentTarget.select()}
-                  />
                 )}
               </>
             )}

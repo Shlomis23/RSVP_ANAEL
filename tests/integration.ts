@@ -6,7 +6,6 @@ import ExcelJS from "exceljs";
 import { Client } from "pg";
 import { tokenHash, newToken } from "../src/lib/crypto";
 config({ path: ".env.local", quiet: true });
-config({ path: "work/.env.tests", quiet: true });
 if (!process.env.NEON_BRANCH || process.env.NEON_BRANCH === "production")
   throw new Error("Integration tests require a development branch");
 const origin = process.env.APP_ORIGIN!;
@@ -21,6 +20,7 @@ const db = new Client({
 await db.connect();
 const contexts: APIRequestContext[] = [];
 const created: string[] = [];
+const adminTokenHashes: string[] = [];
 const settingsAuditIds: string[] = [];
 const originalEvent = (
   await db.query(
@@ -59,7 +59,7 @@ const make = (name: string, count = 4) => ({
 try {
   const guest = await context();
   const other = await context();
-  const admin = await context();
+  let admin = await context();
   await call(other, "admin/rsvps", "GET", undefined, 401);
   await call(other, "admin/export", "GET", undefined, 401);
   const malicious = await context();
@@ -71,7 +71,7 @@ try {
   const input = make("ראשון");
   const first = await (await call(guest, "rsvps", "POST", input, 201)).json();
   created.push(first.rsvp.id);
-  assert.ok(first.recoveryUrl.includes("#token="));
+  assert.ok(!("recoveryUrl" in first));
   assert.equal(first.rsvp.guest_count, 4);
   const retry = await Promise.all(
     [0, 1, 2].map(
@@ -80,7 +80,7 @@ try {
   );
   for (const replay of retry) {
     assert.equal(replay.rsvp.id, first.rsvp.id);
-    assert.equal(replay.recoveryUrl, null);
+    assert.ok(!("recoveryUrl" in replay));
   }
   const count = await db.query(
     "select count(*)::int as count from rsvps where id=$1",
@@ -91,12 +91,13 @@ try {
   await call(other, `rsvps/${first.rsvp.id}`, "GET", undefined, 401);
   await call(other, "session", "POST");
   await call(other, `rsvps/${first.rsvp.id}`, "GET", undefined, 404);
+  await call(guest, "rsvps", "POST", make("נוסף", 3), 409);
   const second = await (
-    await call(guest, "rsvps", "POST", make("שני", 3), 201)
+    await call(other, "rsvps", "POST", make("שני", 3), 201)
   ).json();
   created.push(second.rsvp.id);
   const mine = (await (await call(guest, "rsvps/mine")).json()).rsvps;
-  assert.equal(mine.length, 2);
+  assert.equal(mine.length, 1);
   await call(guest, `rsvps/${first.rsvp.id}`, "PATCH", {
     ...input,
     guestCount: 2,
@@ -108,7 +109,7 @@ try {
   assert.equal(firstLoaded.guest_count, 2);
   assert.equal(firstLoaded.version, 2);
   const secondLoaded = (
-    await (await call(guest, `rsvps/${second.rsvp.id}`)).json()
+    await (await call(other, `rsvps/${second.rsvp.id}`)).json()
   ).rsvp;
   assert.equal(secondLoaded.guest_count, 3);
   const concurrent = await Promise.all(
@@ -133,26 +134,27 @@ try {
     0,
   );
   console.log(
-    "PASS ownership, multiple approvals, version conflicts and no/maybe counts",
+    "PASS ownership across browsers, version conflicts and no/maybe counts",
   );
-  const token = new URL(first.recoveryUrl).hash.slice("#token=".length);
-  await call(other, "rsvps/claim", "POST", { token });
-  assert.equal(
-    (await (await call(other, `rsvps/${first.rsvp.id}`)).json()).rsvp.id,
-    first.rsvp.id,
+  await call(guest, `rsvps/${first.rsvp.id}/recovery`, "POST", undefined, 404);
+  const storedTokens = await db.query(
+    "select count(*)::int as total from rsvp_recovery_tokens where rsvp_id=$1",
+    [first.rsvp.id],
   );
-  await call(other, "rsvps/claim", "POST", { token: newToken() }, 401);
-  const rotated = await (
-    await call(guest, `rsvps/${first.rsvp.id}/recovery`, "POST")
-  ).json();
-  assert.ok(rotated.recoveryUrl);
-  await call(other, "rsvps/claim", "POST", { token }, 401);
-  console.log(
-    "PASS recovery on a new device and immediate recovery-token revocation",
+  assert.equal(storedTokens.rows[0].total, 0);
+  console.log("PASS one approval per browser; no new recovery links issued");
+  const adminToken = newToken();
+  await db.query(
+    "insert into admin_sessions(session_hash,credential_version,expires_at) values($1,$2,now()+interval '10 minutes')",
+    [tokenHash(adminToken), tokenHash(process.env.ADMIN_PASSWORD_HASH!)],
   );
-  await call(admin, "admin/login", "POST", {
-    password: process.env.TEST_ADMIN_PASSWORD,
+
+  admin = await request.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: { Origin: origin, Cookie: `rsvp_admin=${adminToken}` },
   });
+  contexts.push(admin);
+  adminTokenHashes.push(tokenHash(adminToken));
   const manual = await (
     await call(
       admin,
@@ -237,7 +239,7 @@ try {
   );
   await call(guest, "rsvps", "POST", make("סגור"), 403);
   await call(
-    guest,
+    other,
     `rsvps/${second.rsvp.id}`,
     "PATCH",
     { ...make("שני"), expectedVersion: 1 },
@@ -267,7 +269,24 @@ try {
   await call(admin, "admin/logout", "POST");
   await call(admin, "admin/rsvps", "GET", undefined, 401);
   console.log("PASS registration closure, deadline and logout revocation");
-  const sessionState = await guest.storageState();
+  const simultaneous = await context();
+  await call(simultaneous, "session", "POST");
+  const race = await Promise.all(
+    [make("מקביל א"), make("מקביל ב")].map((data) =>
+      simultaneous.post("/api/rsvps", { data }),
+    ),
+  );
+  assert.deepEqual(race.map((r) => r.status()).sort(), [201, 409]);
+  const raceWinner = await race.find((r) => r.status() === 201)!.json();
+  created.push(raceWinner.rsvp.id);
+  assert.equal(
+    (await (await call(simultaneous, "rsvps/mine")).json()).rsvps.length,
+    1,
+  );
+  console.log(
+    "PASS concurrent different requests cannot create extra approvals in one browser",
+  );
+  const sessionState = await other.storageState();
   const guestToken = sessionState.cookies.find((c) =>
     c.name.endsWith("rsvp_session"),
   )!.value;
@@ -275,7 +294,7 @@ try {
     "update browser_sessions set revoked_at=now() where session_hash=$1",
     [tokenHash(guestToken)],
   );
-  await call(guest, `rsvps/${second.rsvp.id}`, "GET", undefined, 401);
+  await call(other, `rsvps/${second.rsvp.id}`, "GET", undefined, 401);
   const rls = await db.query(
     "select relname,relrowsecurity from pg_class where relname=any($1)",
     [
@@ -295,14 +314,7 @@ try {
     "select grantee from information_schema.table_privileges where table_name='rsvps' and grantee='PUBLIC'",
   );
   assert.equal(access.rowCount, 0);
-  const stored = await db.query(
-    "select token_hash from rsvp_recovery_tokens where rsvp_id=$1",
-    [second.rsvp.id],
-  );
-  assert.ok(stored.rows.every((r) => /^[a-f0-9]{64}$/.test(r.token_hash)));
-  console.log(
-    "PASS session revocation, RLS, public grant denial and hashed secrets",
-  );
+  console.log("PASS session revocation, RLS and public grant denial");
 } finally {
   await db.query(
     "update events set is_active=$1,registration_closes_at=$2 where slug='anael'",
@@ -331,6 +343,10 @@ try {
     }
     await c.dispose();
   }
+  await db.query(
+    "delete from admin_sessions where session_hash=any($1::text[])",
+    [adminTokenHashes],
+  );
   await db.end();
 }
 type R = { id: string; version: number };
